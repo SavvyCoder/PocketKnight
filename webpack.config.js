@@ -8,18 +8,16 @@ module.exports = {
     entry: './src/index.js',
 
     output: {
-        path: path.resolve(__dirname, 'build'),
-        publicPath: '/build/',
+        path: path.resolve(__dirname, 'client/build'),
+        publicPath: '/client/build/',
         filename: 'project.bundle.js'
     },
 
     module: {
-        rules: [
-          {
-            test: [ /\.vert$/, /\.frag$/ ],
+        rules: [{
+            test: [/\.vert$/, /\.frag$/],
             use: 'raw-loader'
-          }
-        ]
+        }]
     },
 
     plugins: [

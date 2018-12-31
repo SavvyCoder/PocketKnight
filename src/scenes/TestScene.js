@@ -7,10 +7,24 @@ export default class TestScene extends Phaser.Scene {
         this.platforms = null;
         this.player = null;
         this.cursors = null;
+        this.spaceBar = null;
         this.stars = null;
         this.bombs = null;
         this.score = 0;
         this.gameOver = null;
+        this.characterDir = {
+            right: true,
+            left: false,
+            isRight: function() { if (this.right) { return true } else { return false } },
+            rightTurn: function() {
+                this.right = true;
+                this.left = false;
+            },
+            leftTurn: function() {
+                this.right = false;
+                this.left = true;
+            }
+        };
     }
 
 
@@ -34,6 +48,13 @@ export default class TestScene extends Phaser.Scene {
         this.load.spritesheet('knight-attack-left',
             '../assets/pocket-knight-default-attack-left.png', { frameWidth: 32, frameHeight: 32 }
         );
+        this.load.spritesheet('knight-attack-walk-right',
+            '../assets/pocket-knight-default-walk-right-attack.png', { frameWidth: 32, frameHeight: 32 }
+        );
+        this.load.spritesheet('knight-attack-walk-left',
+            '../assets/pocket-knight-default-walk-left-attack .png', { frameWidth: 32, frameHeight: 32 }
+        );
+
     }
 
     create() {
@@ -41,13 +62,28 @@ export default class TestScene extends Phaser.Scene {
 
         this.platforms = this.physics.add.staticGroup();
 
-        this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
+        //Add in dynamic game height
 
-        this.platforms.create(600, 400, 'ground');
-        this.platforms.create(50, 250, 'ground');
-        this.platforms.create(750, 220, 'ground');
+        let pixel32width = Math.ceil(this.sys.game.config.width / 32);
+        let pixel32ground = this.sys.game.config.height - 48;
 
-        this.player = this.physics.add.sprite(100, 450, 'dude');
+        console.log(pixel32width);
+        console.log(pixel32ground);
+
+        let groundPos = 0;
+
+        for (let i = 0; i <= pixel32width; i++) {
+            this.platforms.create(groundPos, (pixel32ground + 32), 'ground').setScale(2);
+            groundPos += 32;
+        }
+
+
+
+        this.platforms.create(600, 400, 'ground').setScale(2);
+        this.platforms.create(50, 250, 'ground').setScale(2);
+        this.platforms.create(750, 220, 'ground').setScale(2);
+
+        this.player = this.physics.add.sprite(100, 450, 'kinght').setScale(2);
 
         this.player.setBounce(0.2);
         this.player.setCollideWorldBounds(true);
@@ -58,13 +94,16 @@ export default class TestScene extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
-
         this.anims.create({
-            key: 'turn',
+            key: 'face-right',
             frames: [{ key: 'knight', frame: 0 }],
             frameRate: 20
         });
-
+        this.anims.create({
+            key: 'face-left',
+            frames: [{ key: 'knight-walk-left', frame: 0 }],
+            frameRate: 20
+        });
         this.anims.create({
             key: 'right',
             frames: this.anims.generateFrameNumbers('knight-walk-right', { start: 0, end: 6 }),
@@ -74,14 +113,37 @@ export default class TestScene extends Phaser.Scene {
 
         this.anims.create({
             key: 'attack-right',
-            frames: this.animes.generateFrameNumbers('knight-attack-right', { start: 0, end: 4 }),
+            frames: this.anims.generateFrameNumbers('knight-attack-right', { start: 0, end: 4 }),
             frameRate: 10,
             repeat: -1
         });
 
+        this.anims.create({
+            key: "attack-left",
+            frames: this.anims.generateFrameNumbers('knight-attack-left', { start: 0, end: 4 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: "attack-walk-right",
+            frames: this.anims.generateFrameNumbers('knight-attack-walk-right', { start: 0, end: 6 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: "attack-walk-left",
+            frames: this.anims.generateFrameNumbers('knight-attack-walk-left', { start: 0, end: 6 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+
+        console.log(this.anims.generateFrameNumbers('knight-walk-right', { start: 0, end: 6 }));
+
         this.physics.add.collider(this.player, this.platforms);
 
         this.cursors = this.input.keyboard.createCursorKeys();
+        this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
         this.stars = this.physics.add.group({
             key: 'star',
@@ -141,25 +203,48 @@ export default class TestScene extends Phaser.Scene {
     }
 
     update() {
+
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-160);
-
-            this.player.anims.play('left', true);
+            this.characterDir.leftTurn();
+            if (this.spaceBar.isDown) {
+                this.player.anims.play("attack-walk-left", true);
+            }
+            else {
+                this.player.anims.play('left', true);
+            }
         }
         else if (this.cursors.right.isDown) {
             this.player.setVelocityX(160);
-
-            this.player.anims.play('right', true);
+            this.characterDir.rightTurn();
+            if (this.spaceBar.isDown) {
+                this.player.anims.play("attack-walk-right", true);
+            }
+            else {
+                this.player.anims.play('right', true);
+            }
         }
         else {
             this.player.setVelocityX(0);
-
-            this.player.anims.play('turn');
+            if (this.characterDir.isRight()) {
+                if (this.spaceBar.isDown) {
+                    this.player.anims.play("attack-right", true);
+                }
+                else {
+                    this.player.anims.play("face-right");
+                }
+            }
+            else {
+                if (this.spaceBar.isDown) {
+                    this.player.anims.play("attack-left", true);
+                }
+                else {
+                    this.player.anims.play("face-left");
+                }
+            }
         }
-
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-330);
         }
-
     }
 }

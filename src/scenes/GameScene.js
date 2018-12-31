@@ -8,7 +8,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('knight', 'pocket-knight-default/logo.png');
+        this.load.image('knight', 'assets/pocket-knight-default.png');
     }
 
     create() {
