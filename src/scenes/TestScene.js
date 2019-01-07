@@ -28,6 +28,12 @@ export default class TestScene extends Phaser.Scene {
     }
 
 
+    init() {
+
+        this.physics.world.setBounds(0, 0, 1600, 800);
+
+    }
+
     preload() {
         this.load.image('sky', '../assets/sky.png');
         this.load.image('ground', '../assets/grass-tile-1.png');
@@ -58,13 +64,16 @@ export default class TestScene extends Phaser.Scene {
     }
 
     create() {
-        this.add.image(400, 300, 'sky');
+
+        this.cameras.main.setBounds(0, 0, 1600, 600);
+
+        this.add.image(400, 300, 'sky').setScale(2).setScrollFactor(1);
 
         this.platforms = this.physics.add.staticGroup();
 
         //Add in dynamic game height
-
-        let pixel32width = Math.ceil(this.sys.game.config.width / 32);
+        let pixel32width = 1600;
+        // Math.ceil(this.sys.game.config.width / 32);
         let pixel32ground = this.sys.game.config.height - 48;
 
         console.log(pixel32width);
@@ -78,15 +87,19 @@ export default class TestScene extends Phaser.Scene {
         }
 
 
-
         this.platforms.create(600, 400, 'ground').setScale(2);
         this.platforms.create(50, 250, 'ground').setScale(2);
         this.platforms.create(750, 220, 'ground').setScale(2);
 
-        this.player = this.physics.add.sprite(100, 450, 'kinght').setScale(2);
+        this.player = this.physics.add.sprite(100, 450, 'knight').setScale(2);
 
         this.player.setBounce(0.2);
+
         this.player.setCollideWorldBounds(true);
+
+        this.cameras.main.startFollow(this.player, true, .09, .09);
+
+        //this.cameras.main.setZoom(1);
 
         this.anims.create({
             key: 'left',
