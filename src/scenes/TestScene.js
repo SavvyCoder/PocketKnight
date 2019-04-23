@@ -10,6 +10,9 @@ export default class TestScene extends Phaser.Scene {
         this.spaceBar = null;
         this.stars = null;
         this.bombs = null;
+        this.slime = null;
+        this.monster = null;
+        this.isAttacking = false;
         this.score = 0;
         this.gameOver = null;
         this.characterDir = {
@@ -60,6 +63,7 @@ export default class TestScene extends Phaser.Scene {
         this.load.spritesheet('knight-attack-walk-left',
             '../assets/pocket-knight-default-walk-left-attack .png', { frameWidth: 32, frameHeight: 32 }
         );
+        this.load.spritesheet('slime', '../assets/pocket-knight-slime.png', { frameWidth: 32, frameHeight: 32 });
 
     }
 
@@ -92,10 +96,13 @@ export default class TestScene extends Phaser.Scene {
         this.platforms.create(750, 220, 'ground').setScale(2);
 
         this.player = this.physics.add.sprite(100, 450, 'knight').setScale(2);
+        this.slime = this.physics.add.sprite(400, 450, 'slime').setScale(2);
 
         this.player.setBounce(0.2);
+        this.slime.setBounce(0.2);
 
         this.player.setCollideWorldBounds(true);
+        this.slime.setCollideWorldBounds(true);
 
         this.cameras.main.startFollow(this.player, true, .09, .09);
 
@@ -149,11 +156,25 @@ export default class TestScene extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
+        this.anims.create({
+            key: "slime-right",
+            frames: this.anims.generateFrameNumbers('slime', { start: 6, end: 11 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: "slime-left",
+            frames: this.anims.generateFrameNumbers('slime', { start: 0, end: 5 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
 
 
         console.log(this.anims.generateFrameNumbers('knight-walk-right', { start: 0, end: 6 }));
 
         this.physics.add.collider(this.player, this.platforms);
+        this.physics.add.collider(this.slime, this.platforms);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -196,23 +217,53 @@ export default class TestScene extends Phaser.Scene {
             }
         }
 
-        this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+        this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
 
         this.bombs = this.physics.add.group();
 
         this.physics.add.collider(this.bombs, this.platforms);
 
+        console.log(this.isAttacking);
+
+        this.physics.add.collider(this.player, this.slime, monsterHandler, null, this);
+
         this.physics.add.collider(this.player, this.bombs, hitBomb, null, this);
+
 
         function hitBomb(player, bomb) {
             this.physics.pause();
 
             player.setTint(0xff0000);
 
-            player.anims.play('turn');
+            player.anims.play('knight');
 
             this.gameOver = true;
         }
+
+        function monsterHandler(player, monster) {
+            if (this.isAttacking) {
+                monster.disableBody(true, true);
+                this.score += 100;
+                this.scoreText.setText('Score: ' + this.score);
+            }
+            else {
+                this.physics.pause();
+                player.setTint(0xff0000);
+                player.anims.play('knight');
+                this.gameOver = true;
+            }
+        }
+
+        this.monster = function(player, monster) {
+            if (player.x > monster.x) {
+                monster.setVelocityX(20);
+                monster.anims.play('slime-right', true);
+            }
+            else {
+                monster.setVelocityX(-20);
+                monster.anims.play('slime-left', true);
+            }
+        };
     }
 
     update() {
@@ -258,6 +309,15 @@ export default class TestScene extends Phaser.Scene {
         }
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-330);
+        }
+
+        this.monster(this.player, this.slime);
+
+        if (this.spaceBar.isDown) {
+            this.isAttacking = true;
+        }
+        else {
+            this.isAttacking = false;
         }
     }
 }

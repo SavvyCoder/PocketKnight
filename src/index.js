@@ -3,6 +3,8 @@ import 'phaser';
 import GameScene from './scenes/GameScene.js';
 import TYPES from './types.js';
 import TestScene from './scenes/TestScene.js';
+import LoadScene from './scenes/LoadScene.js';
+import MenuScene from './scenes/MenuScene.js';
 
 // class Game extends Phaser.Game {
 //     constructor() {
@@ -16,7 +18,7 @@ var game = new Phaser.Game({
     width: 800,
     height: 600,
     scene: [
-        TestScene
+        LoadScene, MenuScene, GameScene
     ],
     physics: {
         default: 'arcade',
